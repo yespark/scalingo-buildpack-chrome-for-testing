@@ -16,8 +16,10 @@ topic "Installing Chrome dependencies"
 # Install correct dependencies according to $STACK
 # The package list is validated by bin/test.sh - see its output to identify any missing libraries.
 # Also look here for more packages/notes https://developers.google.com/web/tools/puppeteer/troubleshooting
+# Note: libnspr4 and libnss3 are required for Chrome 140+ on Ubuntu scalingo image
+# Without these, Chrome fails with "error while loading shared libraries"
 case "${STACK}" in
-  "heroku-20" | "heroku-22")
+  "scalingo-20" | "scalingo-22")
     PACKAGES="
       fonts-liberation
       libasound2
@@ -25,6 +27,8 @@ case "${STACK}" in
       libatk1.0-0
       libcups2
       libgbm1
+      libnspr4
+      libnss3
       libxcomposite1
       libxdamage1
       libxfixes3
@@ -32,7 +36,7 @@ case "${STACK}" in
       libxrandr2
     "
     ;;
-  "heroku-24")
+  "scalingo-24")
     PACKAGES="
       fonts-liberation
       libasound2t64
@@ -40,6 +44,8 @@ case "${STACK}" in
       libatk1.0-0
       libcups2
       libgbm1
+      libnspr4
+      libnss3
       libxcomposite1
       libxdamage1
       libxfixes3
@@ -48,7 +54,7 @@ case "${STACK}" in
     "
     ;;
   *)
-    error "STACK must be 'heroku-20', 'heroku-22' or 'heroku-24', not '${STACK}'."
+    error "STACK must be 'scalingo-20', 'scalingo-22' or 'scalingo-24', not '${STACK}'."
 esac
 
 # We must invalidate the cache if the stack changes, since the cached indexes and

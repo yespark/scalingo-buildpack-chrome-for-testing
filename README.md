@@ -1,6 +1,6 @@
-# Heroku Buildpack, Chrome for Testing
+# Scalingo Buildpack, Chrome for Testing
 
-This buildpack installs **Google Chrome browser** `chrome` & [`chromedriver`](https://chromedriver.chromium.org/), the Selenium driver for Chrome, in a Heroku app.
+This buildpack installs **Google Chrome browser** `chrome` & [`chromedriver`](https://chromedriver.chromium.org/), the Selenium driver for Chrome, in a Scalingo app.
 
 ## Background
 
@@ -12,14 +12,14 @@ In summer 2023, the Chrome development team [addressed a long-standing problem w
 > If migrating from a previous Chrome-chromedriver installation, then remove any pre-existing Chrome or Chromedriver buildpacks from the app. See the [migration guide](#migrating-from-separate-buildpacks).
 
 ```bash
-heroku buildpacks:add -i 1 heroku-community/chrome-for-testing
+sed -i '1i https://github.com/yespark/scalingo-buildpack-chrome-for-testing' .buildpacks
 ```
 
 Deploy the app to install Chrome for Testing. 🚀 
 
 ## Launching `chrome`
 
-To execute in a Heroku dyno, `chrome` typically requires the flags:
+To execute in a Scalingo dyno, `chrome` typically requires the flags:
 
 * `--headless`
 * `--no-sandbox`
@@ -36,14 +36,7 @@ config variable to `Stable`, `Beta`, `Dev`, or `Canary`, and then deploy/build t
 
 ### Remove Existing Installations
 
-When an app already uses the separate Chrome & Chromedriver buildpacks, remove them from the app, before adding this one:
-
-```
-heroku buildpacks:remove heroku/google-chrome
-heroku buildpacks:remove heroku/chromedriver
-
-heroku buildpacks:add -i 1 heroku-community/chrome-for-testing
-```
+When an app already uses the separate Chrome & Chromedriver buildpacks, remove them from the .buildpacks file, before adding this one.
 
 ### Path to Installed Executables
 
@@ -52,7 +45,7 @@ After being installed by this buildpack, `chrome` & `chromedriver` are set in th
 If the absolute paths are required, you can discover their location in an app:
 
 ```bash
->>> heroku run bash
+>>> scalingo run bash
 $ which chrome
 /app/.chrome-for-testing/chrome-linux64/chrome
 $ which chromedriver
@@ -81,5 +74,4 @@ Some use-cases may require these flags too:
 
 *For buildpack maintainers only.*
 
-1. [Create a new release](https://github.com/heroku/heroku-buildpack-chrome-for-testing/releases/new) on GitHub.
-1. [Publish the release tag](https://addons-next.heroku.com/buildpacks/eb9c36ef-a265-4ea3-9468-2cd0fc3f04c1/publish) in Heroku Buildpack Registry.
+1. [Create a new release](https://github.com/yespark/scalingo-buildpack-chrome-for-testing/releases/new) on GitHub.
