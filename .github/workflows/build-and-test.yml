@@ -3,13 +3,47 @@ name: build-and-test
 on: push
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        stack_version: [20, 22, 24]
-    runs-on: ubuntu-${{ matrix.stack_version }}.04
-
+  test-20:
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v6
     - name: Check Installation
-      run: ./bin/test.sh ${{ matrix.stack_version }}
+      run: ./bin/test.sh 20
+
+  test-22:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Check Installation
+      run: ./bin/test.sh 22
+
+  test-24:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Check Installation
+      run: ./bin/test.sh 24
+
+  test-cache-20:
+    needs: test-20
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test Caching
+      run: ./bin/test.sh 20 true
+
+  test-cache-22:
+    needs: test-22
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test Caching
+      run: ./bin/test.sh 22 true
+
+  test-cache-24:
+    needs: test-24
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v6
+    - name: Test Caching
+      run: ./bin/test.sh 24 true
