@@ -135,7 +135,7 @@ for PACKAGE in $PACKAGES; do
     curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
   else
     # Check if package needs to be downloaded
-    OUTPUT=$(apt-get $APT_OPTIONS -y --force-yes -d install --no-install-recommends $PACKAGE 2>&1)
+    OUTPUT=$(apt-get $APT_OPTIONS -y --allow-downgrades --allow-remove-essential --allow-change-held-packages -d install --no-install-recommends $PACKAGE 2>&1)
     if echo "$OUTPUT" | grep -q "Need to get [1-9]"; then
       PACKAGES_NEEDED=true
       echo "Fetching .debs for $PACKAGE" | indent

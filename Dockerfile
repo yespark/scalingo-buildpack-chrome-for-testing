@@ -1,9 +1,8 @@
 # syntax=docker/dockerfile:1-labs
 
 ARG STACK_VERSION=24
-ARG TARGETPLATFORM=linux/amd64
 
-FROM --platform=$TARGETPLATFORM scalingo/scalingo-${STACK_VERSION}:latest AS build
+FROM --platform=linux/amd64 scalingo/scalingo-${STACK_VERSION}:latest AS build
 
 # This ARG duplication is required since the lines before and after the 'FROM' are in different scopes.
 ARG STACK_VERSION
@@ -20,7 +19,7 @@ RUN env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/detect /tmp/build
 RUN env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env
 
 # We must then test against the run image since that has fewer system libraries installed.
-FROM --platform=$TARGETPLATFORM scalingo/scalingo-${STACK_VERSION}:latest
+FROM --platform=linux/amd64 scalingo/scalingo-${STACK_VERSION}:latest
 COPY --from=build --chown=appsdeck /tmp/build /app
 USER appsdeck
 # Emulate the platform which sources all .profile.d/ scripts on app boot.
