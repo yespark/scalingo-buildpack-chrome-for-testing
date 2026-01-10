@@ -19,7 +19,7 @@ topic "Installing Chrome dependencies"
 # Note: libnspr4 and libnss3 are required for Chrome 140+ on Ubuntu scalingo image
 # Without these, Chrome fails with "error while loading shared libraries"
 case "${STACK}" in
-  "scalingo-20" | "scalingo-22")
+  "scalingo-22")
     PACKAGES="
       fonts-liberation
       libasound2
@@ -54,7 +54,7 @@ case "${STACK}" in
     "
     ;;
   *)
-    error "STACK must be 'scalingo-20', 'scalingo-22' or 'scalingo-24', not '${STACK}'."
+    error "STACK must be 'scalingo-22' or 'scalingo-24', not '${STACK}'."
 esac
 
 # We must invalidate the cache if the stack changes, since the cached indexes and

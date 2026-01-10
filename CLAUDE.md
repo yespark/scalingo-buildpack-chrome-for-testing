@@ -20,7 +20,7 @@ This is a Scalingo buildpack with the standard buildpack structure:
 - **Chrome Installation**: Downloads Chrome for Testing binaries from Google's CDN based on channel (Stable/Beta/Dev/Canary)
 - **Chromedriver Installation**: Downloads matching chromedriver version automatically
 - **PATH Setup**: Adds Chrome and chromedriver to PATH via `.profile.d/chrome-for-testing.sh`
-- **Multi-stack Support**: Supports Scalingo stack versions 20, 22, and 24
+- **Multi-stack Support**: Supports Scalingo stack versions 22 and 24
 
 ## Common Commands
 
@@ -28,7 +28,7 @@ This is a Scalingo buildpack with the standard buildpack structure:
 ```bash
 ./bin/test.sh <stack_version>
 ```
-Where stack_version is 20, 22, or 24. This builds a Docker container and validates the Chrome installation.
+Where stack_version is 22 or 24. This builds a Docker container and validates the Chrome installation.
 
 ### Manual Docker Testing
 ```bash
