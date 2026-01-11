@@ -13,7 +13,6 @@ This is a Scalingo buildpack with the standard buildpack structure:
 - `bin/detect` - Always returns success to detect this buildpack
 - `bin/compile` - Main buildpack logic that downloads and installs Chrome & chromedriver
 - `bin/install-chrome-dependencies` - Installs system dependencies for Chrome
-- `bin/test.sh` - Test script that builds Docker container and validates installation
 
 ### Key Components
 
@@ -26,23 +25,21 @@ This is a Scalingo buildpack with the standard buildpack structure:
 
 ### Testing the Buildpack
 ```bash
-./bin/test.sh <stack_version>
-```
-Where stack_version is 22 or 24. This builds a Docker container and validates the Chrome installation.
-
-### Manual Docker Testing
-```bash
-# Build container
-docker build --progress=plain --build-arg="STACK_VERSION=24" -t scalingo-buildpack-chrome-for-testing .
+# Build container (use STACK_VERSION=22 or 24)
+docker build --platform=linux/amd64 --progress=plain --build-arg="STACK_VERSION=24" -t scalingo-buildpack-chrome-for-testing .
 
 # Test Chrome version
-docker run --rm scalingo-buildpack-chrome-for-testing bash -l -c 'chrome --version'
+docker run --platform=linux/amd64 --rm scalingo-buildpack-chrome-for-testing bash -l -c 'chrome --version'
 
 # Test chromedriver version
-docker run --rm scalingo-buildpack-chrome-for-testing bash -l -c 'chromedriver --version'
+docker run --platform=linux/amd64 --rm scalingo-buildpack-chrome-for-testing bash -l -c 'chromedriver --version'
 
-# Test Chrome functionality
-docker run --rm scalingo-buildpack-chrome-for-testing bash -l -c 'chrome --no-sandbox --headless --screenshot https://google.com'
+# Verify no missing linked libraries
+docker run --platform=linux/amd64 --rm scalingo-buildpack-chrome-for-testing bash -l -c 'ldd $(which chrome)'
+docker run --platform=linux/amd64 --rm scalingo-buildpack-chrome-for-testing bash -l -c 'ldd $(which chromedriver)'
+
+# Display size breakdown
+docker run --platform=linux/amd64 --rm scalingo-buildpack-chrome-for-testing bash -l -c 'du --human-readable --max-depth=1 /app'
 ```
 
 ## Configuration
