@@ -6,15 +6,63 @@ env:
   DOCKER_PLATFORM: linux/amd64
 
 jobs:
-  test-22:
-    runs-on: ubuntu-22.04
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        stack_version: ["22", "24"]
+        include:
+          - stack_version: "22"
+            runner: ubuntu-22.04
+          - stack_version: "24"
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     env:
-      STACK_VERSION: "22"
-      IMAGE_NAME: scalingo-buildpack-chrome-for-testing-22
+      STACK_VERSION: ${{ matrix.stack_version }}
+      IMAGE_NAME: scalingo-buildpack-chrome-for-testing-${{ matrix.stack_version }}
+      CACHE_VOLUME: buildpack-cache-test-${{ matrix.stack_version }}
     steps:
     - uses: actions/checkout@v6
 
-    - name: Build Docker image
+    - name: Create cache volume
+      run: |
+        docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
+        docker volume create "$CACHE_VOLUME"
+
+    - name: Build base image
+      run: |
+        docker build --platform=$DOCKER_PLATFORM --progress=plain \
+          --build-arg="STACK_VERSION=$STACK_VERSION" \
+          --target=build \
+          -t scalingo-buildpack-chrome-base .
+
+    - name: First compile run (cold cache)
+      run: |
+        docker run --platform=$DOCKER_PLATFORM --rm \
+          -v "$CACHE_VOLUME:/tmp/cache" \
+          -e STACK="scalingo-$STACK_VERSION" \
+          scalingo-buildpack-chrome-base \
+          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env'
+
+    - name: Second compile run (verify cache is used)
+      run: |
+        docker run --platform=$DOCKER_PLATFORM --rm \
+          -v "$CACHE_VOLUME:/tmp/cache" \
+          -e STACK="scalingo-$STACK_VERSION" \
+          scalingo-buildpack-chrome-base \
+          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env' 2>&1 | tee /tmp/cache-test-output.txt
+
+        echo "--- Verifying cache hits ---"
+        grep "Using cached Chrome" /tmp/cache-test-output.txt
+        grep "Using cached Chromedriver" /tmp/cache-test-output.txt
+        grep "Using cached APT package index" /tmp/cache-test-output.txt
+        echo "Cache test PASSED"
+
+    - name: Cleanup cache volume
+      if: always()
+      run: docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
+
+    - name: Build full image
       run: |
         docker build --platform=$DOCKER_PLATFORM --progress=plain \
           --build-arg="STACK_VERSION=$STACK_VERSION" \
@@ -34,126 +82,3 @@ jobs:
 
     - name: Display size breakdown
       run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'du --human-readable --max-depth=1 /app'
-
-  test-24:
-    runs-on: ubuntu-24.04
-    env:
-      STACK_VERSION: "24"
-      IMAGE_NAME: scalingo-buildpack-chrome-for-testing-24
-    steps:
-    - uses: actions/checkout@v6
-
-    - name: Build Docker image
-      run: |
-        docker build --platform=$DOCKER_PLATFORM --progress=plain \
-          --build-arg="STACK_VERSION=$STACK_VERSION" \
-          -t $IMAGE_NAME .
-
-    - name: Check Chrome version
-      run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'chrome --version'
-
-    - name: Check Chromedriver version
-      run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'chromedriver --version'
-
-    - name: Verify Chrome linked libraries
-      run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'ldd $(which chrome)'
-
-    - name: Verify Chromedriver linked libraries
-      run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'ldd $(which chromedriver)'
-
-    - name: Display size breakdown
-      run: docker run --platform=$DOCKER_PLATFORM --rm $IMAGE_NAME bash -l -c 'du --human-readable --max-depth=1 /app'
-
-  test-cache-22:
-    needs: test-22
-    runs-on: ubuntu-22.04
-    env:
-      STACK_VERSION: "22"
-      CACHE_VOLUME: buildpack-cache-test-22
-    steps:
-    - uses: actions/checkout@v6
-
-    - name: Create cache volume
-      run: |
-        docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
-        docker volume create "$CACHE_VOLUME"
-
-    - name: Build base image for cache test
-      run: |
-        docker build --platform=$DOCKER_PLATFORM --progress=plain \
-          --build-arg="STACK_VERSION=$STACK_VERSION" \
-          --target=build \
-          -t scalingo-buildpack-chrome-base .
-
-    - name: First run - download Chrome and dependencies
-      run: |
-        docker run --platform=$DOCKER_PLATFORM --rm \
-          -v "$CACHE_VOLUME:/tmp/cache" \
-          -e STACK="scalingo-$STACK_VERSION" \
-          scalingo-buildpack-chrome-base \
-          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env'
-
-    - name: Second run - verify cache is used
-      run: |
-        docker run --platform=$DOCKER_PLATFORM --rm \
-          -v "$CACHE_VOLUME:/tmp/cache" \
-          -e STACK="scalingo-$STACK_VERSION" \
-          scalingo-buildpack-chrome-base \
-          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env' 2>&1 | tee /tmp/cache-test-output.txt
-
-        echo "--- Verifying cache hits ---"
-        grep "Using cached Chrome" /tmp/cache-test-output.txt
-        grep "Using cached Chromedriver" /tmp/cache-test-output.txt
-        grep "Using cached APT package index" /tmp/cache-test-output.txt
-        echo "Cache test PASSED"
-
-    - name: Cleanup cache volume
-      if: always()
-      run: docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
-
-  test-cache-24:
-    needs: test-24
-    runs-on: ubuntu-24.04
-    env:
-      STACK_VERSION: "24"
-      CACHE_VOLUME: buildpack-cache-test-24
-    steps:
-    - uses: actions/checkout@v6
-
-    - name: Create cache volume
-      run: |
-        docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
-        docker volume create "$CACHE_VOLUME"
-
-    - name: Build base image for cache test
-      run: |
-        docker build --platform=$DOCKER_PLATFORM --progress=plain \
-          --build-arg="STACK_VERSION=$STACK_VERSION" \
-          --target=build \
-          -t scalingo-buildpack-chrome-base .
-
-    - name: First run - download Chrome and dependencies
-      run: |
-        docker run --platform=$DOCKER_PLATFORM --rm \
-          -v "$CACHE_VOLUME:/tmp/cache" \
-          -e STACK="scalingo-$STACK_VERSION" \
-          scalingo-buildpack-chrome-base \
-          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env'
-
-    - name: Second run - verify cache is used
-      run: |
-        docker run --platform=$DOCKER_PLATFORM --rm \
-          -v "$CACHE_VOLUME:/tmp/cache" \
-          -e STACK="scalingo-$STACK_VERSION" \
-          scalingo-buildpack-chrome-base \
-          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env' 2>&1 | tee /tmp/cache-test-output.txt
-
-        echo "--- Verifying cache hits ---"
-        grep "Using cached Chrome" /tmp/cache-test-output.txt
-        grep "Using cached Chromedriver" /tmp/cache-test-output.txt
-        grep "Using cached APT package index" /tmp/cache-test-output.txt
-        echo "Cache test PASSED"
-
-    - name: Cleanup cache volume
-      if: always()
-      run: docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
