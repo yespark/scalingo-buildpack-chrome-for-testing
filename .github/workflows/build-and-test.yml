@@ -47,7 +47,7 @@ jobs:
         echo "--- Verifying cold cache downloads ---"
         grep "Downloading Chrome" /tmp/cold-cache-output.txt
         grep "Downloading Chromedriver" /tmp/cold-cache-output.txt
-        grep "Fetching .debs" /tmp/cold-cache-output.txt
+        grep "Downloading APT packages" /tmp/cold-cache-output.txt
         echo "Cold cache test PASSED"
 
     - name: Second compile run (verify cache is used)
