@@ -42,7 +42,13 @@ jobs:
           -v "$CACHE_VOLUME:/tmp/cache" \
           -e STACK="scalingo-$STACK_VERSION" \
           scalingo-buildpack-chrome-base \
-          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env'
+          bash -c 'env -i PATH=$PATH HOME=$HOME STACK=$STACK /buildpack/bin/compile /tmp/build /tmp/cache /tmp/env' 2>&1 | tee /tmp/cold-cache-output.txt
+
+        echo "--- Verifying cold cache downloads ---"
+        grep "Downloading Chrome" /tmp/cold-cache-output.txt
+        grep "Downloading Chromedriver" /tmp/cold-cache-output.txt
+        grep "Fetching .debs" /tmp/cold-cache-output.txt
+        echo "Cold cache test PASSED"
 
     - name: Second compile run (verify cache is used)
       run: |
