@@ -29,11 +29,11 @@ jobs:
         docker volume rm "$CACHE_VOLUME" 2>/dev/null || true
         docker volume create "$CACHE_VOLUME"
 
-    - name: Build base image
+    - name: Build base image (without compile)
       run: |
         docker build --platform=$DOCKER_PLATFORM --progress=plain \
           --build-arg="STACK_VERSION=$STACK_VERSION" \
-          --target=build \
+          --target=setup \
           -t scalingo-buildpack-chrome-base .
 
     - name: First compile run (cold cache)

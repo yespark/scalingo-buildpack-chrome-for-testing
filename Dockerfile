@@ -3,7 +3,7 @@
 ARG STACK_VERSION=24
 ARG BUILD_PLATFORM=linux/amd64
 
-FROM --platform=${BUILD_PLATFORM} scalingo/scalingo-${STACK_VERSION}:latest AS build
+FROM --platform=${BUILD_PLATFORM} scalingo/scalingo-${STACK_VERSION}:latest AS setup
 
 # This ARG duplication is required since the lines before and after the 'FROM' are in different scopes.
 ARG STACK_VERSION
@@ -13,6 +13,9 @@ ENV STACK="scalingo-${STACK_VERSION}"
 USER appsdeck
 RUN mkdir -p /tmp/build /tmp/cache /tmp/env
 COPY --chown=appsdeck . /buildpack
+
+# Build stage runs detect and compile
+FROM setup AS build
 
 # Sanitize the environment seen by the buildpack, to prevent reliance on
 # environment variables that won't be present when it's run by Scalingo CI.
